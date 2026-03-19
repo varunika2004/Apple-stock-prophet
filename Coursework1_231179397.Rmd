@@ -1,0 +1,190 @@
+---
+title: "MTH6139 Time Series" 
+subtitle: "Coursework 1 - Apple Stock Analysis" 
+author: "Varunika Chellarajesh" 
+date: "Spring term 2025" 
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: spacelab 
+    highlight: tango
+---
+ 
+```{r, echo=FALSE}
+# This code will display the QMUL logo at the top right of the page
+# Do not change this code
+htmltools::img(src = knitr::image_uri("images/QMlogo.png"),
+               alt = 'logo',
+               style = 'position:absolute; top:0; right:0; padding:10px; width:20%;')
+```
+
+# Section 1: Prophet Forecasting for Apple Stock
+
+## Introduction
+
+This project applies Meta’s Prophet forecasting system to Apple stock prices.
+
+The dataset contains daily observations of Apple stock prices (ticker symbol: AAPL), taken from Kaggle.
+
+Events like  COVID-19, global conflicts, and changes in the technology sector have had significant impacts on stock price.
+
+The aim is to understand how the series behaves and to produce forecasts.
+
+---
+
+## Data Import
+
+The data were imported from a CSV file stored in the `data` folder.
+
+```{r data-import}
+apple_data_raw <- read.csv("data/apple.csv")
+```
+
+
+## Data Preparation for Prophet
+
+The date column was converted to date format and renamed ds. The stock prices were cleaned and stored in a variable named y.
+
+```{r}
+apple_prophet_data <- data.frame(
+  ds = as.Date(apple_data_raw$Date, format = "%m/%d/%Y"),
+  y = as.numeric(gsub("[\\$,]", "", apple_data_raw$Close.Last))
+)
+
+apple_prophet_data <- na.omit(apple_prophet_data)
+```
+
+## Visualisation of the Time Series
+
+Before fitting the model, it is useful to examine the raw time series.
+
+```{r}
+plot(
+  apple_prophet_data$ds,
+  apple_prophet_data$y,
+  type = "l",
+  main = "Apple Stock Price",
+  xlab = "Date",
+  ylab = "Price"
+)
+```
+
+The series shows a general upward trend over time, with noticeable short-term fluctuations.
+
+## A Simple Linear Trend Check
+
+This confirms the upward trend seen in the data.
+
+```{r}
+time_index <- 1:nrow(apple_prophet_data)
+
+linear_trend_model <- lm(y ~ time_index, data = apple_prophet_data)
+
+summary(linear_trend_model)
+```
+
+The output gives a  summary of the overall direction of the series.
+
+
+## Fitting the Prophet Model
+
+The Prophet package was used to fit a forecasting model to the prepared Apple stock data.
+
+```{r}
+library(prophet)
+
+apple_prophet_model <- prophet(apple_prophet_data)
+```
+
+Prophet models the series using trend and seasonal components.
+
+## Creating Future Dates
+
+Future dates were generated in order to produce forecasts.
+
+```{r}
+apple_future_dates <- make_future_dataframe(apple_prophet_model, periods = 8)
+```
+
+## Generating Forecasts
+
+The fitted model was used to generate forecasts.
+
+```{r}
+apple_forecast <- predict(apple_prophet_model, apple_future_dates)
+```
+
+
+## Forecast Output
+
+It is useful to inspect some of the forecast values.
+
+```{r}
+tail(apple_forecast[, c("ds", "yhat", "yhat_lower", "yhat_upper")])
+```
+
+The table shows predicted values together with uncertainty intervals.
+
+## Prophet Forecast Plot
+
+The main forecast plot is shown below.
+
+```{r}
+plot(apple_prophet_model, apple_forecast)
+```
+
+The black points show the observed data, while the blue line shows the fitted and forecast values.
+
+## Prophet Components
+
+The component plots help to separate the main parts of the Prophet model.
+
+```{r}
+prophet_plot_components(apple_prophet_model, apple_forecast)
+```
+
+These plots show how Prophet decomposes the time series.
+
+## A Shorter Time Frame
+
+It is useful to look at a more recent part of the data.
+
+
+```{r}
+recent_apple_data <- subset(
+  apple_prophet_data,
+  ds >= as.Date("2020-01-01")
+)
+
+plot(
+  recent_apple_data$ds,
+  recent_apple_data$y,
+  type = "l",
+  main = "Apple Stock Price Since 2020",
+  xlab = "Date",
+  ylab = "Price"
+)
+```
+
+Looking at a shorter time frame makes it easier to observe recent movements in the series.
+
+## Comments on the Results
+
+Overall, Apple stock prices show a clear upward trend over time, although there are some fluctuations along the way. 
+
+There is a noticeable drop around early 2020, which is likely due to the COVID-19 pandemic, when financial markets were very uncertain.
+
+After this period, the stock recovers and continues to grow, possibly because of increased demand for technology and digital services.
+
+There are also some ups and downs in the later years, which could be linked to global events and changes in the economy.
+
+In particular, factors such as interest rates and general market conditions seem to affect the stock price at different points in time.
+
+Overall, the stock has grown over time, but it is still influenced by many outside factors.
+
+## Conclusion
+
+In this report, Apple stock price data were analysed using the Prophet model.
+
+The results show that Prophet is easy to use and produces clear visual outputs. It provides a simple way to understand trends and generate forecasts for time series data.
