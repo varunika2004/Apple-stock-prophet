@@ -2,7 +2,7 @@
 title: "MTH6139 Time Series" 
 subtitle: "Coursework 1 - Apple Stock Analysis" 
 author: "Varunika Chellarajesh" 
-date: "Spring term 2025" 
+date: "15.03.2026" 
 output: 
   html_document:
     toc: true
